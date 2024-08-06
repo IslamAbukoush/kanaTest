@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <style>
+        *, *::after, *::before {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+        }
+        main {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .display {
+            display: flex;
+            flex-direction: row;
+            width: 150px;
+            height: 150px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .element {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 100px;
+            color: #535353;
+        }
+        .element.active {
+            text-decoration: underline;
+            color: black;
+            font-weight: 500;
+        }
+        .element.old {
+            color: #CCC;
+        }
+        .input {
+            width: 50%;
+            height: 50px;
+            border: none;
+            outline: none;
+            border: black 2px solid;
+            border-radius: 20px;
+            padding-left: 10px;
+            font-size: 30px;
+            text-align: center;
+        }
+        .timer {
+            font-size: 120px;
+        }
+        .shake {
+            animation: horizontal-shaking 400ms;
+        }
+        @keyframes horizontal-shaking {
+            0% { transform: translateX(0) }
+            25% { transform: translateX(20px) }
+            50% { transform: translateX(-20px) }
+            75% { transform: translateX(20px) }
+            100% { transform: translateX(0) }
+        }
+    </style>
+    <main>
+        <div class="container">
+            <div class="timer">00:00</div>
+            <div class="display"></div>
+            <input type="text" class="input">
+        </div>
+    </main>
+    <script>
+        let elements = [
+            ["あ", "a"], ["い", "i"], ["う", "u"], ["え", "e"], ["お", "o"],
+            ["か", "ka"], ["き", "ki"], ["く", "ku"], ["け", "ke"], ["こ", "ko"],
+            ["さ", "sa"], ["し", "shi"], ["す", "su"], ["せ", "se"], ["そ", "so"],
+            ["た", "ta"], ["ち", "chi"], ["つ", "tsu"], ["て", "te"], ["と", "to"],
+            ["な", "na"], ["に", "ni"], ["ぬ", "nu"], ["ね", "ne"], ["の", "no"],
+            ["は", "ha"], ["ひ", "hi"], ["ふ", "fu"], ["へ", "he"], ["ほ", "ho"],
+            ["ま", "ma"], ["み", "mi"], ["む", "mu"], ["め", "me"], ["も", "mo"],
+            ["や", "ya"], ["ゆ", "yu"], ["よ", "yo"],
+            ["ら", "ra"], ["り", "ri"], ["る", "ru"], ["れ", "re"], ["ろ", "ro"],
+            ["わ", "wa"], ["を", "wo"],
+            ["ん", "n"],
+            ["が", "ga"], ["ぎ", "gi"], ["ぐ", "gu"], ["げ", "ge"], ["ご", "go"],
+            ["ざ", "za"], ["じ", "ji"], ["ず", "zu"], ["ぜ", "ze"], ["ぞ", "zo"],
+            ["だ", "da"], ["ぢ", "ji"], ["づ", "zu"], ["で", "de"], ["ど", "do"],
+            ["ば", "ba"], ["び", "bi"], ["ぶ", "bu"], ["べ", "be"], ["ぼ", "bo"],
+            ["ぱ", "pa"], ["ぴ", "pi"], ["ぷ", "pu"], ["ぺ", "pe"], ["ぽ", "po"]
+        ];
+        shuffle(elements);
+        let displayElement = document.querySelector(".display")
+        let input = document.querySelector(".input")
+        let timer = document.querySelector(".timer")
+        let interval;
+        let started = false;
+        for(let element of elements) {
+            let elementDiv = document.createElement("div")
+            elementDiv.classList.add("element")
+            elementDiv.textContent = element[0]
+            element.push(elementDiv)
+            displayElement.append(elementDiv)
+        }
+        let activeIndex = -1;
+        let setActive = index => {
+            if(activeIndex > -1) {
+                elements[activeIndex][2].classList.remove("active")
+                elements[activeIndex][2].classList.add("old")
+            }
+            elements[index][2].classList.add("active")
+            displayElement.style.right = 150*index + "px"
+            activeIndex = index
+        }
+        setActive(0)
+        let canShake = true;
+        document.addEventListener("keydown", e => {
+            if(e.keyCode === 13) {
+                if(input.value === elements[activeIndex][1]) {
+                    if(activeIndex < elements.length-1) {
+                        setActive(activeIndex+1)
+                    } else {
+                        clearInterval(interval);
+                        timer.style.color = "green"
+                    }
+                    input.value = ""
+                } else {
+                    if(canShake) {
+                        canShake = false
+                        input.classList.add("shake")
+                        setTimeout(() => {
+                            input.classList.remove("shake")
+                            canShake = true
+                        }, 500);
+                    }
+                }
+            }
+        })
+        input.addEventListener("input", startTimer)
+
+        function shuffle(array) {
+            let currentIndex = array.length;
+            while (currentIndex != 0) {
+                let randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex], array[currentIndex]];
+            }
+        }
+
+        function startTimer() {
+            if(started) return;
+            started = true;
+            let start = Date.now();
+            interval = setInterval(function() {
+                let delta = Date.now() - start
+                let seconds = Math.floor(delta / 1000)
+                let mins = Math.floor(seconds/60)
+                let secs = seconds - mins*60
+                if(mins < 10) mins = '0'+mins;
+                if(secs < 10) secs = '0'+secs;
+                timer.textContent = mins+":"+secs
+            }, 500);
+        }
+    </script>
+</body>
+</html>
