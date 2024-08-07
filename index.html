@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: sans-serif;
         }
         body {
             width: 100vw;
@@ -37,6 +38,7 @@
             height: 150px;
             flex-shrink: 0;
             position: relative;
+            transition: right 200ms, opacity 500ms;
         }
         .element {
             width: 150px;
@@ -47,6 +49,7 @@
             flex-shrink: 0;
             font-size: 100px;
             color: #535353;
+            transition: color 500ms;
         }
         .element.active {
             text-decoration: underline;
@@ -66,9 +69,40 @@
             padding-left: 10px;
             font-size: 30px;
             text-align: center;
+            transition: opacity 500ms;
         }
         .timer {
             font-size: 120px;
+            transition: transform 500ms, color 500ms;
+            color: rgb(57, 57, 57);
+        }
+        .transform {
+            transform: translateY(120px) scale(1.5);
+            color: rgb(0, 0, 0);
+        }
+        .reset {
+            border: none;
+            outline: none;
+            background: none;
+            background-color: #CCC;
+            font-size: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            height: 100px;
+            border-radius: 100%;
+            padding-left: 7px;
+            padding-top: 5px;
+            margin-top: 30px;
+            opacity: 0;
+            transition: all 500ms;
+        }
+        .reset:hover {
+            background-color: #9a9a9a;
+        }
+        .reset:active {
+            background-color: #d37272;
         }
         .shake {
             animation: horizontal-shaking 400ms;
@@ -86,6 +120,7 @@
             <div class="timer">00:00</div>
             <div class="display"></div>
             <input type="text" class="input">
+            <button class="reset">⟳</button>
         </div>
     </main>
     <script>
@@ -107,20 +142,14 @@
             ["ば", "ba"], ["び", "bi"], ["ぶ", "bu"], ["べ", "be"], ["ぼ", "bo"],
             ["ぱ", "pa"], ["ぴ", "pi"], ["ぷ", "pu"], ["ぺ", "pe"], ["ぽ", "po"]
         ];
-        shuffle(elements);
         let displayElement = document.querySelector(".display")
         let input = document.querySelector(".input")
         let timer = document.querySelector(".timer")
+        let reset = document.querySelector(".reset")
         let interval;
         let started = false;
-        for(let element of elements) {
-            let elementDiv = document.createElement("div")
-            elementDiv.classList.add("element")
-            elementDiv.textContent = element[0]
-            element.push(elementDiv)
-            displayElement.append(elementDiv)
-        }
         let activeIndex = -1;
+        let canShake = true;
         let setActive = index => {
             if(activeIndex > -1) {
                 elements[activeIndex][2].classList.remove("active")
@@ -130,8 +159,21 @@
             displayElement.style.right = 150*index + "px"
             activeIndex = index
         }
-        setActive(0)
-        let canShake = true;
+        
+        function startTest() {
+            shuffle(elements);
+            started = false
+            displayElement.replaceChildren()
+            for(let element of elements) {
+                let elementDiv = document.createElement("div")
+                elementDiv.classList.add("element")
+                elementDiv.textContent = element[0]
+                element[2] = elementDiv
+                displayElement.append(elementDiv)
+            }
+            activeIndex = -1;
+            setActive(0)
+        }
         document.addEventListener("keydown", e => {
             if(e.keyCode === 13) {
                 if(input.value === elements[activeIndex][1]) {
@@ -139,7 +181,11 @@
                         setActive(activeIndex+1)
                     } else {
                         clearInterval(interval);
-                        timer.style.color = "green"
+                        displayElement.style.visibility = "hidden"
+                        input.style.visibility = "hidden"
+                        displayElement.style.opacity = "0"
+                        input.style.opacity = "0"
+                        timer.classList.add("transform")
                     }
                     input.value = ""
                 } else {
@@ -169,6 +215,7 @@
         function startTimer() {
             if(started) return;
             started = true;
+            reset.style.opacity = "1";
             let start = Date.now();
             interval = setInterval(function() {
                 let delta = Date.now() - start
@@ -178,8 +225,23 @@
                 if(mins < 10) mins = '0'+mins;
                 if(secs < 10) secs = '0'+secs;
                 timer.textContent = mins+":"+secs
-            }, 500);
+            }, 100);
         }
+        startTest()
+        reset.addEventListener("click", _ => {
+            if(!started) return;
+            clearInterval(interval)
+            timer.textContent = "00:00"
+            timer.classList.remove("transform")
+            started = false
+            reset.style.opacity = "0";
+            input.value = ""
+            displayElement.style.visibility = "visible"
+            input.style.visibility = "visible"
+            displayElement.style.opacity = "1"
+            input.style.opacity = "1"
+            startTest()
+        })
     </script>
 </body>
 </html>
